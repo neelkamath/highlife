@@ -1,0 +1,4 @@
+image: zenika/kotlin:1.3.31-jdk8
+
+test:
+  script: ./gradlew test
