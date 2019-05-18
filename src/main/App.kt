@@ -2,6 +2,8 @@ package com.neelkamath.highlife
 
 private enum class SystemOption { RANDOM, SUPPLIED }
 
+private enum class Visualizer { STDOUT, CHART }
+
 /**
  * Returns a [System] from [string] where each row has size [columns].
  *
@@ -11,19 +13,12 @@ private enum class SystemOption { RANDOM, SUPPLIED }
 private fun createSystem(string: String, columns: Int) =
     string.map { if (it == 'A') Cell.ALIVE else Cell.DEAD }.chunked(columns).map { it.toMutableList() }
 
-/**
- * Returns a human readable [String] from [system].
- *
- * Each row will be separated by a new line, and each column a space. [Cell.ALIVE] and [Cell.DEAD] are represented by
- * `1` and `0` respectively.
- */
-private fun prettifySystem(system: System) =
-    system.joinToString("\n") { row -> row.joinToString(" ") { if (it == Cell.ALIVE) "1" else "0" } }
-
 private fun read(things: String, min: Int): Int {
-    print("Enter the number of $things: ")
-    val input = readLine()!!.toIntOrNull() ?: read(things, min)
-    return if (input < min) read(things, min) else input
+    print("Enter the number of $things, or \"r\" for a random amount: ")
+    val input = readLine()!!
+    if (input == "r") return 100
+    val num = input.toIntOrNull() ?: read(things, min)
+    return if (num < min) read(things, min) else num
 }
 
 private fun readOption(): SystemOption =
@@ -39,33 +34,24 @@ private fun isValidSystem(system: String, columns: Int) =
     system.all { it in listOf('A', 'D') } && system.length >= columns && system.length % columns == 0
 
 private fun readSystem(columns: Int): String {
-    print("Enter the seed using \"A\" and \"D\" to represent alive and dead cells respectively ")
-    print("(e.g., \"ADDDAA\" has two rows, and three columns): ")
+    print(
+        """
+        Enter the seed using A and D to represent alive and dead cells respectively (e.g., "ADDDAA" has two rows, and
+        three columns):
+        """.trimStart().replace(Regex("""\s+"""), " ")
+    )
     val input = readLine()!!
     return if (isValidSystem(input, columns)) input else readSystem(columns)
 }
 
-private fun playForever(highlife: Highlife) = with(highlife) {
-    var generation = 0
-    while (!gameIsOver()) {
-        step()
-        println("Generation ${++generation}:\n${prettifySystem(system)}")
+private fun readVisualizer(): Visualizer =
+    print("Enter \"s\" to visualize the game via stdout, or \"c\" to visualize via a chart: ").run {
+        when (readLine()) {
+            "s" -> Visualizer.STDOUT
+            "c" -> Visualizer.CHART
+            else -> readVisualizer()
+        }
     }
-}
-
-private fun playForSteps(highlife: Highlife, steps: Int) = with(highlife) {
-    for (i in 1..steps) {
-        if (gameIsOver()) break
-        step()
-        println("Generation $i:\n${prettifySystem(system)}")
-    }
-}
-
-private fun play(highlife: Highlife, steps: Int) = with(highlife) {
-    println("Seed:\n${prettifySystem(system)}")
-    if (steps == -1) playForever(highlife) else playForSteps(highlife, steps)
-    if (gameIsOver()) println("The game is over.")
-}
 
 fun main() {
     val steps = read("time steps (\"-1\" will generate until the game is over)", min = -1)
@@ -74,5 +60,8 @@ fun main() {
         SystemOption.RANDOM -> Highlife(read("rows", min = 1), columns)
         SystemOption.SUPPLIED -> Highlife(createSystem(readSystem(columns), columns))
     }
-    play(highlife, steps)
+    when (readVisualizer()) {
+        Visualizer.STDOUT -> playOnStdout(highlife, steps)
+        Visualizer.CHART -> GuiPlayer(highlife, steps, read("milliseconds to delay between steps", min = 1).toLong())
+    }
 }

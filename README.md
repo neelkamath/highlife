@@ -2,6 +2,8 @@
 
 This is an implementation of the <a href="https://en.wikipedia.org/wiki/Highlife_(cellular_automaton)">Highlife</a> cellular automaton.
 
+![Demo](demo.gif)
+
 ## Installation
 
 1. Install a version of Kotlin not less than 1.3, and less than 2 from [here](https://kotlinlang.org/docs/tutorials/command-line.html).
