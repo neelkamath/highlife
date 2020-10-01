@@ -1,0 +1,12 @@
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: ./gradlew test
+      - uses: actions/upload-artifact@v1
+        with:
+          name: server-test-results
+          path: build/reports/tests/test/
